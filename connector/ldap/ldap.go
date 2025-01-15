@@ -417,7 +417,7 @@ func (c *ldapConnector) identityFromEntry(user ldap.Entry) (ident connector.Iden
 		err := fmt.Errorf("ldap: entry %q missing following required attribute(s): %q", user.DN, missing)
 		return connector.Identity{}, err
 	}
-	return ident, nil
+	return tweakIdentity(ident), nil
 }
 
 func (c *ldapConnector) userEntry(conn *ldap.Conn, username string) (user ldap.Entry, found bool, err error) {
