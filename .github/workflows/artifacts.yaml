@@ -78,16 +78,20 @@ jobs:
           flavor: |
             latest = false
           tags: |
-            type=ref,event=branch,enable=${{ matrix.variant == 'alpine' }}
+            type=ref,event=branch,enable=${{ github.ref_name == github.event.repository.default_branch && matrix.variant == 'alpine' }}
             type=ref,event=pr,prefix=pr-,enable=${{ matrix.variant == 'alpine' }}
             type=semver,pattern={{raw}},enable=${{ matrix.variant == 'alpine' }}
             type=raw,value=latest,enable=${{ github.ref_name == github.event.repository.default_branch && matrix.variant == 'alpine' }}
-            type=ref,event=branch,suffix=-${{ matrix.variant }}
+            type=ref,event=branch,enable={{is_default_branch}},suffix=-${{ matrix.variant }}
             type=ref,event=pr,prefix=pr-,suffix=-${{ matrix.variant }}
             type=semver,pattern={{raw}},suffix=-${{ matrix.variant }}
             type=raw,value=latest,enable={{is_default_branch}},suffix=-${{ matrix.variant }}
+            type=sha,prefix=g,enable=${{ matrix.variant == 'alpine' }}
+            type=sha,prefix=g,suffix=-${{ matrix.variant }}
           labels: |
             org.opencontainers.image.documentation=https://dexidp.io/docs/
+        env:
+          DOCKER_METADATA_SHORT_SHA_LENGTH: 12
 
       # Multiple exporters are not supported yet
       # See https://github.com/moby/buildkit/pull/2760
