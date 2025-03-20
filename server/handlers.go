@@ -657,13 +657,41 @@ func (s *Server) handleApproval(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
+		if r.FormValue("alreadyApproved") == "true" && !authReq.ForceApprovalPrompt {
+			s.sendCodeResponse(w, r, authReq)
+			return
+		}
+
 		client, err := s.storage.GetClient(ctx, authReq.ClientID)
 		if err != nil {
 			s.logger.ErrorContext(r.Context(), "Failed to get client", "client_id", authReq.ClientID, "err", err)
 			s.renderError(r, w, http.StatusInternalServerError, "Failed to retrieve client.")
 			return
 		}
-		if err := s.templates.approval(r, w, authReq.ID, authReq.Claims.Username, client.Name, authReq.Scopes); err != nil {
+
+		approvalSkip := (*approvalSkipData)(nil)
+		if sub, err := genSubject(authReq.Claims.UserID, authReq.ConnectorID); err == nil {
+			// Generate two hashes as a compact way to identify whether a client-user-scope
+			// relationship has changed.
+			h := sha256.New()
+			h.Write([]byte(client.ID))
+			h.Write([]byte(sub))
+			key := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+			h = sha256.New()
+			h.Write([]byte(client.ID))
+			scopes := make([]string, len(authReq.Scopes))
+			copy(scopes, authReq.Scopes)
+			sort.Strings(scopes)
+			for _, scope := range scopes {
+				h.Write([]byte(scope))
+			}
+			value := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+			approvalSkip = &approvalSkipData{key, value}
+		}
+
+		if err := s.templates.approval(r, w, authReq.ID, authReq.Claims.Username, client.Name, approvalSkip, authReq.Scopes); err != nil {
 			s.logger.ErrorContext(r.Context(), "server template error", "err", err)
 		}
 	case http.MethodPost:
