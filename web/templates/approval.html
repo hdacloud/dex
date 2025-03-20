@@ -1,5 +1,40 @@
 {{ template "header.html" . }}
 
+{{- with .ApprovalSkip }}
+  {{- /*
+    WARNING: The following script should be the very first thing within this html snippet.
+  */ -}}
+  <script>
+    {
+      const approvalSkipKey = "approvalSkip.{{ .Key }}";
+      const approvalSkipValue = "{{ .Value }}";
+      const lastApprovalSkipValue = localStorage.getItem(approvalSkipKey);
+
+      if (lastApprovalSkipValue && lastApprovalSkipValue === approvalSkipValue) {
+        const location = new URL(window.location.href);
+        location.searchParams.set("alreadyApproved", "true");
+        window.location.replace(location.href);
+      }
+
+      function removeScopes() {
+        localStorage.removeItem(approvalSkipKey);
+      }
+
+      function saveScopes() {
+        if (document.getElementById("save-access-grant")?.checked) {
+          localStorage.setItem(approvalSkipKey, approvalSkipValue);
+        } else {
+          removeScopes()
+        }
+      }
+
+      window.addEventListener("load", () => {
+        document.getElementById("save-access-grant-container").style.display = null;
+      });
+    }
+  </script>
+{{- end }}
+
 <div class="theme-panel">
   <h2 class="theme-heading">Grant Access</h2>
 
@@ -19,8 +54,15 @@
   <hr class="dex-separator">
 
   <div>
+    <div id="save-access-grant-container" style="display: none">
+      <input type="checkbox" id="save-access-grant">
+      <label for="save-access-grant">
+        Save access grant for future logins
+      </label>
+    </div>
+
     <div class="theme-form-row">
-      <form method="post">
+      <form method="post" onsubmit="saveScopes()">
         <input type="hidden" name="req" value="{{ .AuthReqID }}"/>
         <input type="hidden" name="approval" value="approve">
         <button type="submit" class="dex-btn theme-btn--success">
@@ -29,7 +71,7 @@
       </form>
     </div>
     <div class="theme-form-row">
-      <form method="post">
+      <form method="post" onsubmit="removeScopes()">
         <input type="hidden" name="req" value="{{ .AuthReqID }}"/>
         <input type="hidden" name="approval" value="rejected">
         <button type="submit" class="dex-btn theme-btn-provider">

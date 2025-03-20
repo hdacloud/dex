@@ -255,6 +255,11 @@ type connectorInfo struct {
 	Type string
 }
 
+type approvalSkipData struct {
+	Key   string
+	Value string
+}
+
 type byName []connectorInfo
 
 func (n byName) Len() int           { return len(n) }
@@ -306,7 +311,7 @@ func (t *templates) password(r *http.Request, w http.ResponseWriter, postURL, la
 	return renderTemplate(w, t.passwordTmpl, data)
 }
 
-func (t *templates) approval(r *http.Request, w http.ResponseWriter, authReqID, username, clientName string, scopes []string) error {
+func (t *templates) approval(r *http.Request, w http.ResponseWriter, authReqID, username, clientName string, approvalSkip *approvalSkipData, scopes []string) error {
 	accesses := []string{}
 	for _, scope := range scopes {
 		access, ok := scopeDescriptions[scope]
@@ -316,12 +321,13 @@ func (t *templates) approval(r *http.Request, w http.ResponseWriter, authReqID, 
 	}
 	sort.Strings(accesses)
 	data := struct {
-		User      string
-		Client    string
-		AuthReqID string
-		Scopes    []string
-		ReqPath   string
-	}{username, clientName, authReqID, accesses, r.URL.Path}
+		User         string
+		ApprovalSkip *approvalSkipData
+		Client       string
+		AuthReqID    string
+		Scopes       []string
+		ReqPath      string
+	}{username, approvalSkip, clientName, authReqID, accesses, r.URL.Path}
 	return renderTemplate(w, t.approvalTmpl, data)
 }
 
