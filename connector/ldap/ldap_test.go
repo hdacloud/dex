@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"os"
@@ -39,6 +40,10 @@ type subtest struct {
 	want      connector.Identity
 }
 
+func enc(s string) string {
+	return hex.EncodeToString([]byte(s))
+}
+
 func TestQuery(t *testing.T) {
 	c := &Config{}
 	c.UserSearch.BaseDN = "ou=People,ou=TestQuery,dc=example,dc=org"
@@ -53,7 +58,7 @@ func TestQuery(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestQuery,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestQuery,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -64,7 +69,7 @@ func TestQuery(t *testing.T) {
 			username: "john",
 			password: "bar",
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestQuery,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestQuery,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -113,7 +118,7 @@ func TestQueryWithEmailSuffix(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestQueryWithEmailSuffix,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestQueryWithEmailSuffix,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "jane@test.example.com",
 				EmailVerified: true,
@@ -124,7 +129,7 @@ func TestQueryWithEmailSuffix(t *testing.T) {
 			username: "john",
 			password: "bar",
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestQueryWithEmailSuffix,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestQueryWithEmailSuffix,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "john@test.example.com",
 				EmailVerified: true,
@@ -150,7 +155,7 @@ func TestUserFilter(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=Seattle,ou=TestUserFilter,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=Seattle,ou=TestUserFilter,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -161,7 +166,7 @@ func TestUserFilter(t *testing.T) {
 			username: "john",
 			password: "bar",
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=Seattle,ou=TestUserFilter,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=Seattle,ou=TestUserFilter,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -199,7 +204,7 @@ func TestUsernameWithMultipleAttributes(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=Seattle,ou=TestUsernameWithMultipleAttributes,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=Seattle,ou=TestUsernameWithMultipleAttributes,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -210,7 +215,7 @@ func TestUsernameWithMultipleAttributes(t *testing.T) {
 			username: "janedoe@example.com",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=Seattle,ou=TestUsernameWithMultipleAttributes,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=Seattle,ou=TestUsernameWithMultipleAttributes,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -244,7 +249,7 @@ func TestGroupQuery(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestGroupQuery,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestGroupQuery,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -257,7 +262,7 @@ func TestGroupQuery(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestGroupQuery,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestGroupQuery,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -291,7 +296,7 @@ func TestGroupsOnUserEntity(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestGroupsOnUserEntity,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestGroupsOnUserEntity,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -304,7 +309,7 @@ func TestGroupsOnUserEntity(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestGroupsOnUserEntity,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestGroupsOnUserEntity,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -339,7 +344,7 @@ func TestGroupFilter(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestGroupFilter,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestGroupFilter,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -352,7 +357,7 @@ func TestGroupFilter(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestGroupFilter,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestGroupFilter,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -392,7 +397,7 @@ func TestGroupToUserMatchers(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestGroupToUserMatchers,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestGroupToUserMatchers,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -405,7 +410,7 @@ func TestGroupToUserMatchers(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestGroupToUserMatchers,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestGroupToUserMatchers,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -440,7 +445,7 @@ func TestDeprecatedGroupToUserMatcher(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestDeprecatedGroupToUserMatcher,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestDeprecatedGroupToUserMatcher,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -453,7 +458,7 @@ func TestDeprecatedGroupToUserMatcher(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestDeprecatedGroupToUserMatcher,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestDeprecatedGroupToUserMatcher,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
@@ -479,7 +484,7 @@ func TestStartTLS(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestStartTLS,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestStartTLS,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -503,7 +508,7 @@ func TestInsecureSkipVerify(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestInsecureSkipVerify,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestInsecureSkipVerify,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -527,7 +532,7 @@ func TestLDAPS(t *testing.T) {
 			username: "jane",
 			password: "foo",
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestLDAPS,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestLDAPS,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -618,7 +623,7 @@ func TestNestedGroups(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestNestedGroups,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestNestedGroups,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -631,7 +636,7 @@ func TestNestedGroups(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestNestedGroups,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestNestedGroups,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
