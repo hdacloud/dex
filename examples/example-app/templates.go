@@ -210,7 +210,7 @@ var indexTmpl = template.Must(template.New("index.html").Parse(`<html>
         </p>
         <p>
             <label for="extra_scopes">Extra scopes:</label>
-            <input type="text" id="extra_scopes" name="extra_scopes" placeholder="list of scopes">
+            <input type="text" id="extra_scopes" name="extra_scopes" placeholder="list of scopes" value="profile email">
         </p>
         <p>
             <label for="connector_id">Connector ID:</label>

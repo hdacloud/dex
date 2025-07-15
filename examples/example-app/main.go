@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -225,32 +227,38 @@ func (a *app) oauth2Config(scopes []string) *oauth2.Config {
 }
 
 func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var scopes []string
-	if extraScopes := r.FormValue("extra_scopes"); extraScopes != "" {
-		scopes = strings.Split(extraScopes, " ")
+	scopesMap := map[string]bool{"openid": true}
+	extraScopes := r.FormValue("extra_scopes")
+	for _, extraScope := range strings.Split(extraScopes, " ") {
+		if extraScope != "" {
+			scopesMap[extraScope] = true
+		}
 	}
+
 	var clients []string
 	if crossClients := r.FormValue("cross_client"); crossClients != "" {
 		clients = strings.Split(crossClients, " ")
 	}
 	for _, client := range clients {
-		scopes = append(scopes, "audience:server:client_id:"+client)
+		scopesMap["audience:server:client_id:"+client] = true
 	}
 	connectorID := ""
 	if id := r.FormValue("connector_id"); id != "" {
 		connectorID = id
 	}
 
+	if r.FormValue("offline_access") == "yes" {
+		scopesMap["offline_access"] = true
+	}
+
 	authCodeURL := ""
-	scopes = append(scopes, "openid", "profile", "email")
-	if r.FormValue("offline_access") != "yes" {
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState)
-	} else if a.offlineAsScope {
-		scopes = append(scopes, "offline_access")
+	scopes := slices.Collect(maps.Keys(scopesMap))
+	if a.offlineAsScope || !scopesMap["offline_access"] {
 		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState)
 	} else {
 		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState, oauth2.AccessTypeOffline)
 	}
+
 	if connectorID != "" {
 		authCodeURL = authCodeURL + "&connector_id=" + connectorID
 	}
