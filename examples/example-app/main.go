@@ -226,6 +226,35 @@ func (a *app) oauth2Config(scopes []string) *oauth2.Config {
 	}
 }
 
+func (a *app) redirectLogin(w http.ResponseWriter, r *http.Request, scopes []string, connectorID string, prompt bool) {
+	var opts []oauth2.AuthCodeOption
+	if !prompt {
+		opts = append(opts, oauth2.SetAuthURLParam("prompt", "none"))
+	}
+
+	if !a.offlineAsScope && slices.Contains(scopes, "offline_access") {
+		opts = append(opts, oauth2.AccessTypeOffline)
+	}
+
+	authCodeURL := a.oauth2Config(scopes).AuthCodeURL(exampleAppState, opts...)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  "scopes",
+		Value: strings.Join(scopes, " "),
+	})
+
+	if connectorID != "" {
+		authCodeURL = authCodeURL + "&connector_id=" + connectorID
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "connector-id",
+			Value: connectorID,
+		})
+	}
+
+	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
+}
+
 func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
 	scopesMap := map[string]bool{"openid": true}
 	extraScopes := r.FormValue("extra_scopes")
@@ -251,19 +280,7 @@ func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
 		scopesMap["offline_access"] = true
 	}
 
-	authCodeURL := ""
-	scopes := slices.Collect(maps.Keys(scopesMap))
-	if a.offlineAsScope || !scopesMap["offline_access"] {
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState)
-	} else {
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState, oauth2.AccessTypeOffline)
-	}
-
-	if connectorID != "" {
-		authCodeURL = authCodeURL + "&connector_id=" + connectorID
-	}
-
-	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
+	a.redirectLogin(w, r, slices.Collect(maps.Keys(scopesMap)), connectorID, true)
 }
 
 func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
@@ -278,7 +295,11 @@ func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// Authorization redirect callback from OAuth2 auth flow.
 		if errMsg := r.FormValue("error"); errMsg != "" {
-			http.Error(w, errMsg+": "+r.FormValue("error_description"), http.StatusBadRequest)
+			if errDesc := r.FormValue("error_description"); errDesc != "" {
+				http.Error(w, errMsg+": "+errDesc, http.StatusBadRequest)
+			} else {
+				http.Error(w, errMsg, http.StatusBadRequest)
+			}
 			return
 		}
 		code := r.FormValue("code")
@@ -292,17 +313,39 @@ func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
 		}
 		token, err = oauth2Config.Exchange(ctx, code)
 	case http.MethodPost:
-		// Form request from frontend to refresh a token.
-		refresh := r.FormValue("refresh_token")
-		if refresh == "" {
-			http.Error(w, fmt.Sprintf("no refresh_token in request: %q", r.Form), http.StatusBadRequest)
+		switch action := r.FormValue("action"); action {
+		case "refresh_token":
+			// Form request from frontend to refresh a token.
+			refresh := r.FormValue("refresh_token")
+			if refresh == "" {
+				http.Error(w, fmt.Sprintf("no refresh_token in request: %q", r.Form), http.StatusBadRequest)
+				return
+			}
+			t := &oauth2.Token{
+				RefreshToken: refresh,
+				Expiry:       time.Now().Add(-time.Hour),
+			}
+			token, err = oauth2Config.TokenSource(ctx, t).Token()
+		case "verify_session":
+			scopesMap := map[string]bool{"openid": true}
+			if cookie, _ := r.Cookie("scopes"); cookie != nil {
+				for _, scope := range strings.Split(cookie.Value, " ") {
+					if scope != "" {
+						scopesMap[scope] = true
+					}
+				}
+			}
+
+			connectorID := ""
+			if cookie, _ := r.Cookie("connector-id"); cookie != nil {
+				connectorID = cookie.Value
+			}
+
+			a.redirectLogin(w, r, slices.Collect(maps.Keys(scopesMap)), connectorID, false)
 			return
+		default:
+			http.Error(w, fmt.Sprintf("unsupported action in request: %q", action), http.StatusBadRequest)
 		}
-		t := &oauth2.Token{
-			RefreshToken: refresh,
-			Expiry:       time.Now().Add(-time.Hour),
-		}
-		token, err = oauth2Config.TokenSource(ctx, t).Token()
 	default:
 		http.Error(w, fmt.Sprintf("method not implemented: %s", r.Method), http.StatusBadRequest)
 		return

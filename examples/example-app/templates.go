@@ -305,11 +305,20 @@ var tokenTmpl = template.Must(template.New("token.html").Parse(`<html>
         <div class="token-title">Refresh Token:</div>
         <pre><code class="token-code">{{ .RefreshToken }}</code></pre>
         <form action="{{ .RedirectURL }}" method="post">
+            <input type="hidden" name="action" value="refresh_token">
             <input type="hidden" name="refresh_token" value="{{ .RefreshToken }}">
             <input type="submit" value="Redeem refresh token">
         </form>
     </div>
     {{ end }}
+
+    <div class="token-block">
+        <div class="token-title">Session:</div>
+        <form action="{{ .RedirectURL }}" method="post">
+            <input type="hidden" name="action" value="verify_session">
+            <input type="submit" value="Check for active session">
+        </form>
+    </div>
 
     <a href="/" class="back-button">Back to Home</a>
 
