@@ -556,7 +556,7 @@ func TestNestedGroups(t *testing.T) {
 			password: "foo",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=jane,ou=People,ou=TestNestedGroups,dc=example,dc=org",
+				UserID:        enc("cn=jane,ou=People,ou=TestNestedGroups,dc=example,dc=org"),
 				Username:      "jane",
 				Email:         "janedoe@example.com",
 				EmailVerified: true,
@@ -569,7 +569,7 @@ func TestNestedGroups(t *testing.T) {
 			password: "bar",
 			groups:   true,
 			want: connector.Identity{
-				UserID:        "cn=john,ou=People,ou=TestNestedGroups,dc=example,dc=org",
+				UserID:        enc("cn=john,ou=People,ou=TestNestedGroups,dc=example,dc=org"),
 				Username:      "john",
 				Email:         "johndoe@example.com",
 				EmailVerified: true,
