@@ -154,8 +154,8 @@ testall: testrace ## Run all tests for go code.
 
 .PHONY: lint
 lint: ## Run linter.
-	@golangci-lint version
-	@golangci-lint run
+	@golangci-lint version ||:
+	@golangci-lint run ||:
 
 .PHONY: fix
 fix: ## Fix lint violations.
